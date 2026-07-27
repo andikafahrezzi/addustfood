@@ -312,4 +312,10 @@ switch (ENVIRONMENT)
  *
  * And away we go...
  */
+// Load Composer autoload
+require_once __DIR__ . '/vendor/autoload.php';
+
+// Load .env
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
 require_once BASEPATH.'core/CodeIgniter.php';

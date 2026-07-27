@@ -17,76 +17,141 @@ class Checkout extends CI_Controller {
         $this->load->library('cart');
         $this->load->model('Order_model');
         $this->load->model('User_model');
+        $this->load->model('Payment_model');
         $this->controller = 'checkout';
     }
+    private function generateOrderNumber()
+    {
+        return 'ORD-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
+    }
 
-    public function index() {
-       $loggedUser = $this->session->userdata('user');
-       $u_id = $loggedUser['user_id'];
-       $user = $this->User_model->getUser($u_id);
-       $payment_mode = $this->input->post('payment_mode');
+public function index()
+{
+    $loggedUser = $this->session->userdata('user');
 
-        if($this->cart->total_items() <= 0) {
-            redirect(base_url().'jeniscemilan');
-        }
-            $submit = $this->input->post('placeholder');
-            // $orderData[$i]['payment_mode'] = $this->input->post('payment_mode'); // Ambil langsung dari form
+    if (!$loggedUser) {
+        redirect('login');
+    }
 
+    $u_id = $loggedUser['user_id'];
+    $user = $this->User_model->getUser($u_id);
+
+    if ($this->cart->total_items() <= 0) {
+        redirect(base_url('jeniscemilan'));
+    }
+
+    $this->form_validation->set_error_delimiters('<p class="invalid-feedback">', '</p>');
+    $this->form_validation->set_rules('address', 'Address', 'trim|required');
+    $this->form_validation->set_rules('payment_mode', 'Metode Pembayaran', 'required');
+
+    if ($this->form_validation->run() == TRUE) {
+
+        // Update alamat user
+        $formArray = [
+            'address' => $this->input->post('address', true)
+        ];
+
+        $this->User_model->update($u_id, $formArray);
+
+        // Ambil metode pembayaran dari form
+        $paymentMethod = $this->input->post('payment_mode', true);
+
+        // Simpan order
+        $order = $this->placeOrder($u_id, $paymentMethod);
+
+        if ($order) {
+
+            // Simpan data pembayaran
+            $paymentData = [
+
+                'order_number'       => $order['order_number'],
+
+                'payment_method'     => $order['payment_method'],
+
+                'transaction_status' => 'pending',
+
+                'gross_amount'       => $order['gross_amount']
+
+            ];
+
+            $this->Payment_model->create($paymentData);
             
-            $this->form_validation->set_error_delimiters('<p class="invalid-feedback">','</p>');
-            $this->form_validation->set_rules('address', 'Address','trim|required');
-            $this->form_validation->set_rules('payment_mode', 'Metode Pembayaran', 'required');
 
-            if($this->form_validation->run() == true) { 
-                $formArray['address'] = $this->input->post('address');
-                
-                //insert data into customer table and get last inserted custid
-                $this->User_model->update($u_id,$formArray);
-                $order = $this->placeOrder($u_id, $payment_mode);
-                // $order = $this->placeOrder($u_id);
-                if($order) {
-                    $this->session->set_flashdata('success_msg', 'Thank You! Your order has been placed successfully!');
-                       redirect(base_url().'orders');
-                } else {
-                     $data['error_msg'] = "Order submission failed, please try again.";
-                }
-            }
+            $this->session->set_flashdata(
+                'success_msg',
+                'Thank You! Your order has been placed successfully!'
+            );
 
-        $data['user'] = $user;
-        $data['cartItems'] = $this->cart->contents();
-        $this->load->view('front/partials/header');
-        $this->load->view('front/checkout',$data);
-        $this->load->view('front/partials/footer');
-    }
+            redirect(base_url('orders'));
 
-    public function placeOrder($u_Id) {  
-        $cartItems = $this->cart->contents();
-        $i = 0;
-        foreach($cartItems as $item) {
-            $orderData[$i]['u_id'] = $u_Id;
-            $orderData[$i]['d_id'] = $item['id'];
-            $orderData[$i]['r_id'] = $item['r_id'];
-            $orderData[$i]['d_name'] = $item['name'];
-            $orderData[$i]['quantity'] = $item['qty'];
-            $orderData[$i]['price'] = $item['subtotal'];
-            $orderData[$i]['payment_mode'] = $item['payment_mode'];
-            $orderData[$i]['date'] = date('Y-m-d H:i:s', now());
-            $orderData[$i]['success-date'] = date('Y-m-d H:i:s', now());
-            $i++;
+        } else {
+
+            $data['error_msg'] = 'Order submission failed, please try again.';
         }
-
-        if(!empty($orderData)) {                
-        $insertOrder = $this->Order_model->insertOrder($orderData);
-            if($insertOrder) {
-                $this->cart->destroy();
-                //return order id
-                return $insertOrder;
-            }
-        }   
-    return false;
     }
 
-    public function process()
+    $data['user'] = $user;
+    $data['cartItems'] = $this->cart->contents();
+
+    $this->load->view('front/partials/header');
+    $this->load->view('front/checkout', $data);
+    $this->load->view('front/partials/footer');
+}
+public function placeOrder($u_id, $paymentMethod)
+{
+    $cartItems = $this->cart->contents();
+
+    if (empty($cartItems)) {
+        return false;
+    }
+
+    // 1 Checkout = 1 Order Number
+    $orderNumber = $this->generateOrderNumber();
+
+    $orderData = [];
+
+    foreach ($cartItems as $item) {
+
+        $orderData[] = [
+
+            'order_number' => $orderNumber,
+
+            'u_id' => $u_id,
+            'd_id' => $item['id'],
+            'r_id' => $item['r_id'],
+            'd_name' => $item['name'],
+            'quantity' => $item['qty'],
+            'price' => $item['subtotal'],
+
+            // sementara masih disimpan di user_orders
+            'payment_mode' => $paymentMethod,
+
+            'date' => date('Y-m-d H:i:s', now()),
+            'success-date' => date('Y-m-d H:i:s', now())
+        ];
+    }
+
+    $insertOrder = $this->Order_model->insertOrder($orderData);
+
+    if ($insertOrder) {
+
+    // Hitung total checkout sebelum cart dihapus
+        $grossAmount = (float) $this->cart->total();
+
+        // Hapus cart
+        $this->cart->destroy();
+
+        return [
+            'order_number'   => $orderNumber,
+            'gross_amount'   => $grossAmount,
+            'payment_method' => $paymentMethod
+        ];
+    }
+
+    return false;
+}
+
+public function process()
 {
     $payment_mode = $this->input->post('payment_mode');
     

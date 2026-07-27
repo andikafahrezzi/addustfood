@@ -4,84 +4,257 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ADDUST FOOD</title>
+    <title>Invoice - ADDUST FOOD</title>
+
     <link rel="stylesheet" href="<?php echo base_url().'assets/css/bootstrap.min.css';?>">
+    <link rel="stylesheet" href="<?php echo base_url().'assets/css/custom.css';?>">
+    <link rel="stylesheet" href="<?php echo base_url().'public/front/css/style.css';?>">
+
     <script src="<?php echo base_url().'assets/js/jquery-3.6.0.min.js';?>"></script>
     <script src="<?php echo base_url().'assets/js/bootstrap.min.js';?>"></script>
-    <script src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
-    <link rel="stylesheet" href="<?php echo base_url().'assets/css/custom.css'; ?>">
-    <link rel="stylesheet" href="<?php echo base_url();?>public/front/css/style.css">
 </head>
 
 <body>
-    <div class="container my-3" style="border: 2px outset blue;">
-        <header class="mt-1 text-right">
-        </header>
-        <div class="invoice mb-3">
-            <div class="row mb-3 p-3">
-                <div class="col-6">
-                    <h3 style="color:blue"><b>ADDUST FOOD</b></h3>
-                </div>
-                <div class="col-6">
-                    <p class="lead font-weight-bold mb-0"><?php echo $res['name'] ?></p>
-                    <p class="mb-0"><?php echo $res['email'] ?></p>
-                    <p><?php echo $res['address'] ?></p>
-                </div>
-                <div class="col-6">
-                    <h3>INVOICE:</h3>
-                    <p class="mb-0"><?php echo $order['f_name']." ".$order['l_name']?></p>
-                    <p class="mb-0"><?php echo $order['address'] ?></p>
-                    <p class="mb-0"><?php echo $order['email'] ?></p>
-                    <p class="mb-0"><?php echo $order['phone'] ?></p>
-                </div>
-                <div class="col-6">
-                    <br><br>
-                    <p class="mb-0"><b>Order Number : </b> <?php echo "#".$order['o_id']; ?></p>
-                    <?php $cDate = strtotime($order['success-date']); ?>
-                    <p class="mb-0"><b>Order Date : </b> <?php echo date('d-M-Y',$cDate); ?></p>
-                    <!-- <p class="mb-0"><b>Payment Mode:</b> Cash On Delivery</p> -->
-                    <p class="mb-0"><b>Payment : </b><?php echo $order['payment_mode']; ?></p>    
-                </div>
-                
-                <div class="col-12">
-                <hr>
-                    <table class="table responsive">
-                        <thead class="tables">
-                            <tr>
-                                <th>Jenis Makanan</th>
-                                <th>Nama Makanan</th>
-                                <th>Quantity</th>
-                                <th>Harga</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><?php echo $res['name']; ?></td>
-                                <td><?php echo $order['d_name']; ?></td>
-                                <td><?php echo $order['quantity']; ?></td>
-                                <td><?php echo 'Rp.'.$dish['price']; ?></td>
-                            </tr>
-                            <tr>
-                                <td colspan="2"></td>
-                                <td class="font-weight-bold">Total</td>
-                                <td class="font-weight-bold"><?php echo 'Rp.'.$order['price'] ?></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+
+<div class="container my-4" style="border:2px solid #0d6efd">
+
+    <div class="p-4">
+
+        <div class="row">
+
+            <div class="col-md-6">
+                <h2 class="text-primary font-weight-bold">
+                    ADDUST FOOD
+                </h2>
             </div>
+
+            <div class="col-md-6 text-right">
+
+                <h5><?php echo $res['name']; ?></h5>
+
+                <div><?php echo $res['email']; ?></div>
+
+                <div><?php echo $res['address']; ?></div>
+
+            </div>
+
         </div>
-        <hr class="my-4">
-        <footer class="fot">
-            <p class="mb-0">Terima Kasih Atas Pesanan Anda dan Memilih Kami!</p>
-            
-            <p>Untuk syarat & ketentuan Silakan kunjungi www.addustfood.com</p>
-        </footer>
+
+        <hr>
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <h5>Customer</h5>
+
+                <div>
+                    <?php echo $user['f_name'].' '.$user['l_name']; ?>
+                </div>
+
+                <div>
+                    <?php echo $user['address']; ?>
+                </div>
+
+                <div>
+                    <?php echo $user['email']; ?>
+                </div>
+
+                <div>
+                    <?php echo $user['phone']; ?>
+                </div>
+
+            </div>
+
+            <div class="col-md-6 text-right">
+
+                <h5>Invoice</h5>
+
+                <div>
+
+                    <strong>Order Number :</strong>
+
+                    <?php echo $summary['order_number']; ?>
+
+                </div>
+
+                <div>
+
+                    <strong>Order Date :</strong>
+
+                    <?php echo date('d M Y H:i', strtotime($summary['date'])); ?>
+
+                </div>
+
+                <div>
+
+                    <strong>Payment :</strong>
+
+                    <?php echo $summary['payment_mode']; ?>
+
+                </div>
+
+                <div>
+
+                    <strong>Status :</strong>
+
+                    Delivered
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <hr>
+
+        <table class="table table-bordered">
+
+            <thead class="thead-light">
+
+                <tr>
+
+                    <th>No</th>
+
+                    <th>Menu</th>
+
+                    <th class="text-center">Qty</th>
+
+                    <th class="text-right">Unit Price</th>
+
+                    <th class="text-right">Subtotal</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+            <?php
+
+            $no = 1;
+
+            foreach($orders as $item){
+
+            ?>
+
+                <tr>
+
+                    <td><?php echo $no++; ?></td>
+
+                    <td><?php echo $item['d_name']; ?></td>
+
+                    <td class="text-center">
+                        <?php echo $item['quantity']; ?>
+                    </td>
+
+                    <td class="text-right">
+                        Rp <?php echo number_format($item['unit_price'],0,',','.'); ?>
+                    </td>
+
+                    <td class="text-right">
+                        Rp <?php echo number_format($item['price'],0,',','.'); ?>
+                    </td>
+
+                </tr>
+
+            <?php } ?>
+
+            </tbody>
+
+            <tfoot>
+
+                <tr>
+
+                    <th colspan="4" class="text-right">
+
+                        Total Item
+
+                    </th>
+
+                    <th class="text-right">
+
+                        <?php echo $summary['total_item']; ?>
+
+                    </th>
+
+                </tr>
+
+                <tr>
+
+                    <th colspan="4" class="text-right">
+
+                        Total Quantity
+
+                    </th>
+
+                    <th class="text-right">
+
+                        <?php echo $summary['total_quantity']; ?>
+
+                    </th>
+
+                </tr>
+
+                <tr>
+
+                    <th colspan="4" class="text-right">
+
+                        Grand Total
+
+                    </th>
+
+                    <th class="text-right">
+
+                        Rp <?php echo number_format($summary['total_price'],0,',','.'); ?>
+
+                    </th>
+
+                </tr>
+
+            </tfoot>
+
+        </table>
+
+        <hr>
+
+        <div class="text-center">
+
+            <h5>Thank You For Your Order!</h5>
+
+            <p class="mb-0">
+                Terima kasih telah mempercayai Addust Food.
+            </p>
+
+            <small>
+                Invoice ini dibuat secara otomatis oleh sistem.
+            </small>
+
+        </div>
+
     </div>
-    <div class="container text-center">
-        <a href="<?php echo base_url().'orders' ?>" class="btn btn-sm btn-warning p-2"><i class="fas fa-angle-left"></i>
-            Back to Orders</a>
-    </div>
+
+</div>
+
+<div class="container text-center mb-4">
+
+    <a href="<?php echo base_url('orders'); ?>" class="btn btn-warning">
+
+        <i class="fas fa-arrow-left"></i>
+
+        Back to Orders
+
+    </a>
+
+    <button onclick="window.print();" class="btn btn-primary">
+
+        <i class="fas fa-print"></i>
+
+        Print Invoice
+
+    </button>
+
+</div>
 
 </body>
 

@@ -21,6 +21,51 @@ class Order_model extends CI_Model {
         $result = $this->db->get('user_orders')->result_array();
         return $result;
     }
+    public function getOrdersByOrderNumber($orderNumber)
+    {
+        $this->db->where('order_number', $orderNumber);
+        $this->db->order_by('o_id', 'ASC');
+
+        return $this->db->get('user_orders')->result_array();
+    }
+    public function getOrderSummary($orderNumber)
+    {
+        $this->db->select('
+            order_number,
+            u_id,
+            r_id,
+            payment_mode,
+            status,
+            date,
+            SUM(price) AS total_price,
+            SUM(quantity) AS total_quantity,
+            COUNT(o_id) AS total_item
+        ');
+
+        $this->db->where('order_number', $orderNumber);
+        $this->db->group_by('order_number');
+
+        return $this->db->get('user_orders')->row_array();
+    }
+    public function getUserOrderHistory($userId)
+    {
+        $this->db->select("
+            order_number,
+            u_id,
+            payment_mode,
+            status,
+            date,
+            SUM(price) AS total_price,
+            SUM(quantity) AS total_quantity,
+            COUNT(o_id) AS total_item
+        ");
+
+        $this->db->where('u_id', $userId);
+        $this->db->group_by('order_number');
+        $this->db->order_by('MAX(date)', 'DESC', false);
+
+        return $this->db->get('user_orders')->result_array();
+    }
 
     public function update($id, $status) {
         $this->db->where('o_id', $id);

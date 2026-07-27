@@ -16,10 +16,25 @@ class Singup extends CI_Controller {
     public function create_user() {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('<p class="invalid-feedback">','</p>');
-        $this->form_validation->set_rules('username', 'Username','trim|required');
+        $this->form_validation->set_rules(
+            'username',
+            'Username',
+            'trim|required|is_unique[users.username]',
+            [
+                'is_unique' => 'Username is already taken.'
+            ]
+        );
+
+        $this->form_validation->set_rules(
+            'email',
+            'Email',
+            'trim|required|valid_email|is_unique[users.email]',
+            [
+                'is_unique' => 'Email is already registered.'
+            ]
+        );
         $this->form_validation->set_rules('firstname', 'First Name','trim|required');
         $this->form_validation->set_rules('lastname', 'Last Name','trim|required');
-        $this->form_validation->set_rules('email', 'Email','trim|required');
         $this->form_validation->set_rules('password', 'Password','trim|required');
         $this->form_validation->set_rules('phone', 'Phone','trim|required');
         $this->form_validation->set_rules('address', 'Address','trim|required');

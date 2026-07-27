@@ -1,0 +1,27 @@
+.env
+
+# Environment
+.env
+
+# Composer dependencies
+/vendor/
+composer.lock
+
+# IDE
+/.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# CI3 specific
+/application/cache/
+/application/logs/
+/application/config/development/
+/application/config/production/
+
+# Backup files
+*.bak
+*.swp
+*.swo

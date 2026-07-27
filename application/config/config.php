@@ -137,7 +137,16 @@ $config['subclass_prefix'] = 'MY_';
 | Note: This will NOT disable or override the CodeIgniter-specific
 |	autoloading (application/config/autoload.php)
 */
-$config['composer_autoload'] = FALSE;
+$config['composer_autoload'] = FCPATH . 'vendor/autoload.php';
+// Load .env dari root project
+if (file_exists(FCPATH . '.env')) {
+    try {
+        $dotenv = Dotenv\Dotenv::createImmutable(FCPATH);
+        $dotenv->load();
+    } catch (Exception $e) {
+        // Biarkan saja jika file .env tidak ada
+    }
+}
 
 /*
 |--------------------------------------------------------------------------
