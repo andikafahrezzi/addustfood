@@ -32,4 +32,22 @@ class Payment_model extends CI_Model
         );
 }
 
+public function updateTransactionStatus($orderNumber, $status)
+{
+    $this->db->where('order_number', $orderNumber);
+
+    return $this->db->update('payments', [
+
+        'transaction_status' => $status,
+        'updated_at' => date('Y-m-d H:i:s')
+
+    ]);
+}
+
+public function updateNotification($orderNumber, $data)
+{
+    $this->db->where('order_number', $orderNumber);
+
+    return $this->db->update('payments', $data);
+}
 }

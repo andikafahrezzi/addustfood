@@ -76,13 +76,7 @@ public function index()
 
             $this->Payment_model->create($paymentData);
             
-
-            $this->session->set_flashdata(
-                'success_msg',
-                'Thank You! Your order has been placed successfully!'
-            );
-
-            redirect(base_url('orders'));
+            redirect(base_url('payment/pay/' . $order['order_number']));
 
         } else {
 

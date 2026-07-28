@@ -28,6 +28,17 @@ class Order_model extends CI_Model {
 
         return $this->db->get('user_orders')->result_array();
     }
+public function updatePaymentMethodByOrderNumber($orderNumber, $paymentMethod)
+{
+    return $this->db
+        ->where('order_number', $orderNumber)
+        ->update(
+            'user_orders',
+            [
+                'payment_mode' => $paymentMethod
+            ]
+        );
+}
     public function getOrderSummary($orderNumber)
     {
         $this->db->select('
