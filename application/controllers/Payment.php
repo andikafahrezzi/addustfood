@@ -194,7 +194,13 @@ class Payment extends CI_Controller
 }
 public function notification()
 {
-    $notification = new \Midtrans\Notification();
+    $raw = file_get_contents('php://input');
+
+        if (empty($raw)) {
+            show_error('Invalid callback', 400);
+        }
+
+        $notification = new \Midtrans\Notification();
 
     $transactionStatus = $notification->transaction_status;
     $orderNumber       = $notification->order_id;
@@ -233,21 +239,20 @@ public function notification()
     // Data yang akan diupdate ke tabel payments
     // =====================================================
 
-    $paymentData = [
+$paymentData = [
+    'midtrans_order_id'    => $orderNumber,
+    'transaction_id'       => $transactionId,
+    'transaction_status'   => $transactionStatus,
+    'payment_type'         => $paymentType,
+    'fraud_status'         => $fraudStatus,
+    'transaction_time'     => $transactionTime,
+    'settlement_time'      => $settlementTime,
+    'expiry_time'          => $expiryTime,
+];
 
-        'midtrans_order_id'  => $orderNumber,
-        'transaction_id'     => $transactionId,
-        'transaction_status' => $transactionStatus,
-        'payment_type'       => $paymentType,
-        'fraud_status'       => $fraudStatus,
-        'transaction_time'   => $transactionTime,
-        'settlement_time'    => $settlementTime,
-        'expiry_time'        => $expiryTime,
-        'status_code'        => $statusCode,
-        'signature_key'      => $signatureKey,
-        'updated_at'         => date('Y-m-d H:i:s')
-
-    ];
+if (in_array($transactionStatus, ['capture', 'settlement'])) {
+    $paymentData['paid_at'] = date('Y-m-d H:i:s');
+}
 
     if ($transactionStatus === 'settlement') {
 
@@ -266,7 +271,33 @@ public function notification()
 
     switch ($transactionStatus) {
 
+    case 'capture':
+
+        // Credit Card
+        if ($fraudStatus == 'accept') {
+
+            $this->Payment_model->updateByOrderNumber($orderNumber, [
+
+                'paid_at' => date('Y-m-d H:i:s')
+
+            ]);
+
+            $this->Order_model->updateOrderStatusByOrderNumber(
+                $orderNumber,
+                'in process'
+            );
+
+        }
+
+        break;
+
         case 'settlement':
+
+            $this->Payment_model->updateByOrderNumber($orderNumber, [
+
+                'paid_at' => date('Y-m-d H:i:s')
+
+            ]);
 
             $this->Order_model->updateOrderStatusByOrderNumber(
                 $orderNumber,
@@ -310,6 +341,7 @@ public function notification()
             );
 
             break;
+
     }
 
     http_response_code(200);

@@ -14,6 +14,16 @@ class Order_model extends CI_Model {
         $result = $this->db->get('user_orders')->row_array();
         return $result;
     }
+    public function updateOrderStatusByOrderNumber($orderNumber, $status)
+{
+    return $this->db
+        ->where('order_number', $orderNumber)
+        ->update('user_orders', [
+
+            'status' => $status
+
+        ]);
+}
 
     public function getUserOrder($id) {
         $this->db->where('u_id', $id);
