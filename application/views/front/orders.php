@@ -35,6 +35,8 @@
                 if(
                     $status == "" ||
                     $status == "NULL" ||
+                    $status == "waiting confirmation" ||
+                    $status == "waiting order" ||
                     $status == "in process" ||
                     $status == "rejected"
                 ){
@@ -55,6 +57,27 @@
                         <td>
                             <button class="btn btn-secondary">
                                 <i class="fas fa-bars"></i> Process
+                            </button>
+                        </td>
+
+                    <?php } ?>
+
+                    <?php if($status=="waiting order"){ ?>
+
+                        <td>
+                            <button class="btn btn-warning">
+                                <span class="fa fa-cog fa-spin"></span>
+                                Waiting Orders..
+                            </button>
+                        </td>
+
+                    <?php } ?>
+                                        <?php if($status=="waiting confirmation"){ ?>
+
+                        <td>
+                            <button class="btn btn-warning">
+                                <span class="fa fa-cog fa-spin"></span>
+                                Waiting Confirmation..
                             </button>
                         </td>
 

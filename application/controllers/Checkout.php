@@ -61,27 +61,33 @@ public function index()
 
         if ($order) {
 
-            // Simpan data pembayaran
-            $paymentData = [
+    // Simpan data pembayaran
+    $paymentData = [
 
-                'order_number'       => $order['order_number'],
+        'order_number'       => $order['order_number'],
+        'payment_method'     => $order['payment_method'],
+        'transaction_status' => 'pending',
+        'gross_amount'       => $order['gross_amount']
 
-                'payment_method'     => $order['payment_method'],
+    ];
 
-                'transaction_status' => 'pending',
+    $this->Payment_model->create($paymentData);
 
-                'gross_amount'       => $order['gross_amount']
+    // Tentukan flow berdasarkan metode pembayaran
+    if ($paymentMethod === 'Cash') {
 
-            ];
+        return $this->finishCashOrder($order);
 
-            $this->Payment_model->create($paymentData);
-            
-            redirect(base_url('payment/pay/' . $order['order_number']));
+    } else {
 
-        } else {
+        return $this->finishOnlineOrder($order);
 
-            $data['error_msg'] = 'Order submission failed, please try again.';
-        }
+    }
+
+} else {
+
+    $data['error_msg'] = 'Order submission failed, please try again.';
+}
     }
 
     $data['user'] = $user;
@@ -106,6 +112,10 @@ public function placeOrder($u_id, $paymentMethod)
 
     foreach ($cartItems as $item) {
 
+        $orderStatus = ($paymentMethod === 'Cash')
+    ? 'waiting confirmation'
+    : 'waiting order';
+
         $orderData[] = [
 
             'order_number' => $orderNumber,
@@ -117,8 +127,8 @@ public function placeOrder($u_id, $paymentMethod)
             'quantity' => $item['qty'],
             'price' => $item['subtotal'],
 
-            // sementara masih disimpan di user_orders
             'payment_mode' => $paymentMethod,
+            'status'       => $orderStatus,
 
             'date' => date('Y-m-d H:i:s', now()),
             'success-date' => date('Y-m-d H:i:s', now())
@@ -144,23 +154,36 @@ public function placeOrder($u_id, $paymentMethod)
 
     return false;
 }
-
-public function process()
+private function finishCashOrder($order)
 {
-    $payment_mode = $this->input->post('payment_mode');
-    
-    // Data lain seperti ID user dan order
-    $data = [
-        'u_id' => $this->session->userdata('u_id'), // Contoh ID user
-        'o_id' => $this->generateOrderID(),
-        'payment_mode' => $payment_mode,
-    ];
+    $this->session->set_flashdata(
+        'success',
+        'Your order has been placed successfully. Please wait for admin confirmation.'
+    );
 
-    // Simpan ke database
-    $this->db->insert('user_orders', $data);
-
-    // Redirect ke halaman invoice
-    redirect('front/invoice' . $data['o_id']);
+    redirect('orders');
 }
+private function finishOnlineOrder($order)
+{
+    redirect('payment/pay/' . $order['order_number']);
+}
+
+    public function process()
+    {
+        $payment_mode = $this->input->post('payment_mode');
+        
+        // Data lain seperti ID user dan order
+        $data = [
+            'u_id' => $this->session->userdata('u_id'), // Contoh ID user
+            'o_id' => $this->generateOrderID(),
+            'payment_mode' => $payment_mode,
+        ];
+
+        // Simpan ke database
+        $this->db->insert('user_orders', $data);
+
+        // Redirect ke halaman invoice
+        redirect('front/invoice' . $data['o_id']);
+    }
 
 }

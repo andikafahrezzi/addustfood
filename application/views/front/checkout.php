@@ -64,8 +64,8 @@
                         <select name="payment_mode" class="form-control" required>
                             <option value="">-- Pilih Metode Pembayaran --</option>
                             <option value="Cash">Cash</option>
-                            <option value="Credit Card">Credit Card</option>
-                            <option value="E-Wallet">E-Wallet</option>
+                            <option value="Online Transfer">Online Transfer </option>
+
                         </select>
                     </div>
                     <div>
