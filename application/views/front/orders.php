@@ -15,10 +15,11 @@
             <table class="table table-bordered table-hover table-striped">
                 <thead>
                 <tr>
-                    <th>Item</th>
-                    <th>Quantity</th>
-                    <th>Harga</th>
-                    <th>Status</th>
+                    <th>Order Number</th>
+                    <th>Total Item</th>
+                    <th>Total Quantity</th>
+                    <th>Payment</th>
+                    <th>Order Status</th>
                     <th>Order Date</th>
                     <th>Action</th>
                 </tr>
@@ -51,59 +52,132 @@
                     <td><?php echo $order['total_quantity']; ?></td>
 
                     <td><?php echo 'Rp. '.number_format($order['total_price'],0,',','.'); ?></td>
+                    <td>
 
-                    <?php if($status=="" || $status=="NULL"){ ?>
+<?php if($order['payment_method'] == 'Cash') { ?>
 
-                        <td>
-                            <button class="btn btn-secondary">
-                                <i class="fas fa-bars"></i> Process
-                            </button>
-                        </td>
+    <span class="badge bg-secondary">
+        Cash
+    </span>
 
-                    <?php } ?>
+<?php } else { ?>
 
-                    <?php if($status=="waiting order"){ ?>
+    <?php
 
-                        <td>
-                            <button class="btn btn-warning">
-                                <span class="fa fa-cog fa-spin"></span>
-                                Waiting Orders..
-                            </button>
-                        </td>
+    $paymentStatus = strtolower($order['transaction_status']);
 
-                    <?php } ?>
-                                        <?php if($status=="waiting confirmation"){ ?>
+    switch($paymentStatus){
 
-                        <td>
-                            <button class="btn btn-warning">
-                                <span class="fa fa-cog fa-spin"></span>
-                                Waiting Confirmation..
-                            </button>
-                        </td>
+        case 'capture':
+        case 'settlement':
 
-                    <?php } ?>
+            $badge = 'success';
+            $text  = ucfirst($paymentStatus);
 
-                    <?php if($status=="in process"){ ?>
+        break;
 
-                        <td>
-                            <button class="btn btn-warning">
-                                <span class="fa fa-cog fa-spin"></span>
-                                On Your Way!
-                            </button>
-                        </td>
+        case 'pending':
 
-                    <?php } ?>
+            $badge = 'warning';
+            $text  = 'Pending';
 
-                    <?php if($status=="rejected"){ ?>
+        break;
 
-                        <td>
-                            <button class="btn btn-danger">
-                                <i class="far fa-times-circle"></i>
-                                Cancelled
-                            </button>
-                        </td>
+        case 'expire':
+        case 'cancel':
+        case 'deny':
 
-                    <?php } ?>
+            $badge = 'danger';
+            $text  = ucfirst($paymentStatus);
+
+        break;
+
+        default:
+
+            $badge = 'secondary';
+            $text  = '-';
+
+    }
+
+    ?>
+
+    <span class="badge bg-<?php echo $badge; ?>">
+        <?php echo $text; ?>
+    </span>
+
+<?php } ?>
+
+</td>
+                  <td>
+
+<?php
+
+switch($status){
+
+    case 'pending payment':
+
+        $badge = 'secondary';
+        $icon  = 'fas fa-credit-card';
+        $text  = 'Pending Payment';
+
+    break;
+
+    case 'waiting confirmation':
+
+        $badge = 'warning';
+        $icon  = 'fas fa-clock';
+        $text  = 'Waiting Confirmation';
+
+    break;
+
+    case 'waiting order':
+
+        $badge = 'warning';
+        $icon  = 'fas fa-clock';
+        $text  = 'Waiting Order';
+
+    break;
+
+    case 'in process':
+
+        $badge = 'primary';
+        $icon  = 'fas fa-truck';
+        $text  = 'In Process';
+
+    break;
+
+    case 'closed':
+
+        $badge = 'success';
+        $icon  = 'fas fa-check-circle';
+        $text  = 'Completed';
+
+    break;
+
+    case 'rejected':
+
+        $badge = 'danger';
+        $icon  = 'fas fa-times-circle';
+        $text  = 'Cancelled';
+
+    break;
+
+    default:
+
+        $badge = 'secondary';
+        $icon  = 'fas fa-question-circle';
+        $text  = ucfirst($status);
+
+}
+
+?>
+
+<span class="badge bg-<?php echo $badge; ?>">
+    <i class="<?php echo $icon; ?>"></i>
+    <?php echo $text; ?>
+</span>
+
+</td>
 
                     <td>
 
@@ -119,18 +193,61 @@
 
                     <td>
 
-                        <!-- sementara masih cancel per checkout -->
-                        <a
-                        href="javascript:void(0);"
-                        class="btn btn-danger disabled">
+<?php
 
-                            <i class="fas fa-trash-alt"></i>
+$paymentStatus = strtolower($order['transaction_status']);
+$orderStatus   = strtolower($order['status']);
+$paymentMethod = strtolower($order['payment_mode']);
 
-                            Cancel
+?>
 
-                        </a>
+<?php if(
+    $paymentMethod == 'online transfer' &&
+    $paymentStatus == 'pending' &&
+    $orderStatus == 'waiting order'
+){ ?>
 
-                    </td>
+    <a
+    href="<?php echo base_url('payment/pay/'.$order['order_number']); ?>"
+    class="btn btn-primary">
+
+        <i class="fas fa-credit-card"></i>
+
+        Continue Payment
+
+    </a>
+
+<?php } elseif(
+    $paymentMethod == 'cash' &&
+    $orderStatus == 'waiting confirmation'
+){ ?>
+
+    <a
+    href="javascript:void(0);"
+   onclick="cancelOrder('<?php echo $order['order_number']; ?>')"
+    class="btn btn-danger">
+
+        <i class="fas fa-times"></i>
+
+        Cancel
+
+    </a>
+
+<?php } else { ?>
+
+    <button
+    class="btn btn-secondary"
+    disabled>
+
+        <i class="fas fa-clock"></i>
+
+        Waiting Order
+
+    </button>
+
+<?php } ?>
+
+</td>
 
                 </tr>
 
@@ -267,9 +384,9 @@
     </div>
 </div>
 <script>
-    function deleteOrder(id) {
+    function cancelOrder(id) {
         if (confirm("Are you sure you want to cancel this order?")) {
-        window.location.href = '<?php echo base_url().'orders/deleteOrder/';?>' + id;
+        window.location.href = '<?php echo base_url().'orders/cancelOrder/';?>' + id;
         }
     }
 </script>

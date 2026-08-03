@@ -13,6 +13,7 @@ class Orders extends CI_Controller {
         $this->load->model('Order_model');
         $this->load->model('Store_model');
         $this->load->model('User_model');
+        $this->load->model('Payment_model');
         $this->load->model('Menu_model');
     }
 public function index()
@@ -45,7 +46,30 @@ public function index()
         redirect(base_url().'orders');
 
     }
+public function cancelOrder($orderNumber)
+{
+    $order = $this->Order_model->getOrderByOrderNumber($orderNumber);
 
+    if (empty($order)) {
+
+        $this->session->set_flashdata('error_msg', 'Order not found');
+
+        redirect(base_url('orders'));
+    }
+
+    // Soft Cancel Payment
+    $this->Payment_model->cancelByOrderNumber($orderNumber);
+
+    // Soft Cancel Order
+    $this->Order_model->cancelOrderByOrderNumber($orderNumber);
+
+    $this->session->set_flashdata(
+        'success_msg',
+        'Your order has been cancelled successfully.'
+    );
+
+    redirect(base_url('orders'));
+}
 
 public function invoice($orderNumber)
 {

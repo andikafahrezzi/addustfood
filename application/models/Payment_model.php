@@ -44,6 +44,19 @@ public function updateTransactionStatus($orderNumber, $status)
     ]);
 }
 
+public function cancelByOrderNumber($orderNumber)
+{
+    return $this->db
+        ->where('order_number', $orderNumber)
+        ->update(
+            'payments',
+            [
+                'transaction_status' => 'cancelled',
+                'updated_at' => date('Y-m-d H:i:s')
+            ]
+        );
+}
+
 public function updateNotification($orderNumber, $data)
 {
     $this->db->where('order_number', $orderNumber);

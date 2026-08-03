@@ -68,25 +68,40 @@ public function updatePaymentMethodByOrderNumber($orderNumber, $paymentMethod)
 
         return $this->db->get('user_orders')->row_array();
     }
-    public function getUserOrderHistory($userId)
-    {
-        $this->db->select("
-            order_number,
-            u_id,
-            payment_mode,
-            status,
-            date,
-            SUM(price) AS total_price,
-            SUM(quantity) AS total_quantity,
-            COUNT(o_id) AS total_item
-        ");
+public function getUserOrderHistory($userId)
+{
+    $this->db->select("
+        user_orders.order_number,
+        user_orders.u_id,
+        user_orders.payment_mode,
+        user_orders.status,
+        user_orders.date,
 
-        $this->db->where('u_id', $userId);
-        $this->db->group_by('order_number');
-        $this->db->order_by('MAX(date)', 'DESC', false);
+        payments.transaction_status,
+        payments.payment_method,
+        payments.snap_token,
 
-        return $this->db->get('user_orders')->result_array();
-    }
+        SUM(user_orders.price) AS total_price,
+        SUM(user_orders.quantity) AS total_quantity,
+        COUNT(user_orders.o_id) AS total_item
+    ");
+
+    $this->db->from('user_orders');
+
+    $this->db->join(
+        'payments',
+        'payments.order_number = user_orders.order_number',
+        'left'
+    );
+
+    $this->db->where('user_orders.u_id', $userId);
+
+    $this->db->group_by('user_orders.order_number');
+
+    $this->db->order_by('MAX(user_orders.date)', 'DESC', false);
+
+    return $this->db->get()->result_array();
+}
 
     public function update($id, $status) {
         $this->db->where('o_id', $id);
@@ -98,6 +113,35 @@ public function updatePaymentMethodByOrderNumber($orderNumber, $paymentMethod)
         $this->db->delete('user_orders');
     }
 
+    public function cancelOrder($id)
+{
+    return $this->db
+        ->where('o_id', $id)
+        ->update(
+            'user_orders',
+            [
+                'status' => 'cancelled'
+            ]
+        );
+}
+public function cancelOrderByOrderNumber($orderNumber)
+{
+    return $this->db
+        ->where('order_number', $orderNumber)
+        ->update(
+            'user_orders',
+            [
+                'status' => 'cancelled'
+            ]
+        );
+}
+public function getOrderByOrderNumber($orderNumber)
+{
+    return $this->db
+        ->where('order_number', $orderNumber)
+        ->get('user_orders')
+        ->row_array();
+}
     public function insertOrder($orderData) {
         $this->db->insert_batch('user_orders', $orderData);
         return $this->db->insert_id();
